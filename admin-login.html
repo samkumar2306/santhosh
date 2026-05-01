@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Login — My Memories</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #060709;
+  --gold: #d4a853; --gold2: #a06520;
+  --text: #ddd8d0; --muted: #58544e;
+  --input-bg: rgba(255,255,255,0.04);
+  --input-border: rgba(255,255,255,0.09);
+  --err-bg: rgba(210,70,70,0.10); --err-border: rgba(210,70,70,0.22); --err-text: #f09090;
+}
+
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'Jost', sans-serif;
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+
+/* grid lines background */
+.bg-lines {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(212,168,83,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212,168,83,0.025) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+.bg-glow {
+  position: fixed; z-index: 0; pointer-events: none;
+  width: 600px; height: 400px;
+  top: -100px; left: 50%; transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(212,168,83,0.06) 0%, transparent 65%);
+  filter: blur(20px);
+}
+.grain {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.4;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='4'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* page layout */
+.page {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column; align-items: center;
+  width: 100%; max-width: 400px; margin: 1.5rem;
+  animation: pageUp 0.5s cubic-bezier(0.22, 0.68, 0, 1.2) forwards;
+}
+@keyframes pageUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* top badge */
+.badge {
+  display: flex; flex-direction: column; align-items: center;
+  margin-bottom: 2.4rem;
+}
+.shield-box {
+  width: 72px; height: 72px; margin-bottom: 1.2rem;
+  background: linear-gradient(145deg, #14161c, #0e1016);
+  border: 1px solid rgba(212,168,83,0.22);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  box-shadow:
+    0 0 0 4px rgba(212,168,83,0.06),
+    0 20px 48px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(212,168,83,0.12);
+  position: relative;
+}
+/* sheen on shield */
+.shield-box::after {
+  content: ''; position: absolute; inset: 0; border-radius: 18px;
+  background: linear-gradient(135deg, rgba(212,168,83,0.14) 0%, transparent 55%);
+  pointer-events: none;
+}
+.badge h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2rem; font-weight: 300; color: #fff;
+  letter-spacing: 0.02em;
+}
+.badge p {
+  margin-top: 0.25rem;
+  font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+}
+
+/* card */
+.card {
+  width: 100%;
+  background: rgba(255,255,255,0.026);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 18px;
+  backdrop-filter: blur(20px);
+  padding: 2.2rem 2.2rem 1.8rem;
+}
+
+/* status bar */
+.status-bar {
+  display: flex; align-items: center; gap: 0.6rem;
+  margin-bottom: 1.7rem; padding-bottom: 1.4rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.pulse-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px rgba(212,168,83,0.7);
+  animation: dotPulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes dotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+.status-text {
+  font-size: 0.68rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted);
+}
+.status-text span { color: var(--gold); }
+
+/* alert */
+.alert {
+  padding: 0.7rem 0.95rem; border-radius: 8px;
+  font-size: 0.78rem; margin-bottom: 0.9rem;
+  display: none; line-height: 1.5;
+}
+.alert.show { display: block; background: var(--err-bg); border: 1px solid var(--err-border); color: var(--err-text); }
+
+/* fields */
+.field { margin-bottom: 1.1rem; }
+.field label {
+  display: block; margin-bottom: 0.45rem;
+  font-size: 0.66rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted);
+}
+.field input {
+  width: 100%; padding: 0.78rem 1rem;
+  background: var(--input-bg); border: 1px solid var(--input-border);
+  border-radius: 9px; color: var(--text);
+  font-family: 'Jost', sans-serif; font-size: 0.9rem;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus {
+  border-color: rgba(212,168,83,0.5);
+  box-shadow: 0 0 0 3px rgba(212,168,83,0.15);
+}
+.field input::placeholder { color: var(--muted); }
+
+/* attempt bar */
+.attempt-track {
+  height: 3px; background: rgba(255,255,255,0.06);
+  border-radius: 2px; margin-bottom: 1rem; overflow: hidden;
+}
+.attempt-fill {
+  height: 100%; width: 0%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--gold), #e05555);
+  transition: width 0.4s ease;
+}
+
+/* button */
+.btn-access {
+  width: 100%; padding: 0.88rem;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  border: none; border-radius: 9px;
+  color: #0a0806;
+  font-family: 'Jost', sans-serif; font-size: 0.82rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 4px 20px rgba(212,168,83,0.2);
+}
+.btn-access:hover  { transform: translateY(-1px); box-shadow: 0 8px 26px rgba(212,168,83,0.32); }
+.btn-access:active { transform: translateY(0); }
+.btn-access:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+/* lockout screen */
+.lockout {
+  display: none; text-align: center; padding: 0.5rem 0;
+}
+.lockout.visible { display: block; }
+.lock-icon { font-size: 2.2rem; display: block; margin-bottom: 0.7rem; }
+.lockout p { font-size: 0.82rem; color: var(--muted); line-height: 1.75; }
+.lockout strong { color: var(--err-text); }
+#lock-countdown { font-size: 1.6rem; font-family: 'Cormorant Garamond', serif; font-weight: 300; color: var(--err-text); display: block; margin: 0.6rem 0; }
+
+/* default hint */
+.hint {
+  margin-top: 1rem; padding: 0.65rem 0.85rem;
+  background: rgba(212,168,83,0.06); border: 1px solid rgba(212,168,83,0.13);
+  border-radius: 8px; font-size: 0.72rem; color: var(--muted); line-height: 1.6;
+}
+.hint strong { color: var(--gold); }
+
+/* back link */
+.back-link {
+  margin-top: 1.5rem; text-align: center;
+}
+.back-link a {
+  font-size: 0.68rem; letter-spacing: 0.11em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; transition: color 0.2s;
+}
+.back-link a:hover { color: var(--gold); }
+</style>
+</head>
+<body>
+
+<div class="bg-lines"></div>
+<div class="bg-glow"></div>
+<div class="grain"></div>
+
+<div class="page">
+
+  <!-- Shield badge -->
+  <div class="badge">
+    <div class="shield-box">🛡️</div>
+    <h1>Admin Portal</h1>
+    <p>Restricted Access Only</p>
+  </div>
+
+  <!-- Login card -->
+  <div class="card">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="pulse-dot"></div>
+      <div class="status-text">Secure Login &nbsp;·&nbsp; <span>My Memories Gallery</span></div>
+    </div>
+
+    <!-- Alert -->
+    <div class="alert" id="a-alert"></div>
+
+    <!-- Form (hidden during lockout) -->
+    <div id="a-form">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="a-user" placeholder="admin" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="a-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <div class="attempt-track">
+        <div class="attempt-fill" id="a-fill"></div>
+      </div>
+
+      <button class="btn-access" id="a-btn" onclick="doAdminLogin()">Access Admin Panel</button>
+
+      <!-- Default credentials hint — remind yourself -->
+      <!-- <div class="hint">
+        🔑 Default credentials: <strong>admin</strong> / <strong>admin123</strong><br>
+        Change them inside the admin panel after first login.
+      </div> -->
+    </div>
+
+    <!-- Lockout screen -->
+    <div class="lockout" id="a-lockout">
+      <span class="lock-icon">🔒</span>
+      <p><strong>Too many failed attempts.</strong></p>
+      <span id="lock-countdown">60</span>
+      <p>seconds remaining before you can try again.</p>
+    </div>
+
+  </div><!-- /card -->
+
+  <div class="back-link">
+    <a href="index.html">← Back to Guest Login</a>
+  </div>
+
+</div>
+
+<script>
+const MAX_ATTEMPTS = 5;
+let attempts = 0;
+let isLocked = false;
+
+function getAdminCreds() {
+  return JSON.parse(localStorage.getItem('mg_admin') || '{"user":"admin","password":"admin123"}');
+}
+
+function showAlert(msg) {
+  const el = document.getElementById('a-alert');
+  el.textContent = msg; el.className = 'alert show';
+}
+function clearAlert() {
+  const el = document.getElementById('a-alert');
+  el.textContent = ''; el.className = 'alert';
+}
+
+function doAdminLogin() {
+  if (isLocked) return;
+
+  const user = document.getElementById('a-user').value.trim();
+  const pass = document.getElementById('a-pass').value;
+
+  if (!user || !pass) { showAlert('Please enter both username and password.'); return; }
+
+  const btn = document.getElementById('a-btn');
+  btn.disabled = true; btn.textContent = 'Verifying…';
+
+  setTimeout(() => {
+    const creds = getAdminCreds();
+    const ok = (user === creds.user || user === creds.mobile) && pass === creds.password;
+
+    if (ok) {
+      clearAlert();
+      sessionStorage.setItem('mg_role', 'admin');
+      btn.textContent = '✓ Access Granted';
+      setTimeout(() => { window.location.href = 'admin.html'; }, 380);
+    } else {
+      attempts++;
+      const pct = (attempts / MAX_ATTEMPTS) * 100;
+      document.getElementById('a-fill').style.width = pct + '%';
+
+      const left = MAX_ATTEMPTS - attempts;
+      if (left <= 0) {
+        startLockout();
+      } else {
+        showAlert('Incorrect credentials. ' + left + ' attempt' + (left === 1 ? '' : 's') + ' remaining.');
+        btn.disabled = false; btn.textContent = 'Access Admin Panel';
+      }
+    }
+  }, 600);
+}
+
+function startLockout() {
+  isLocked = true;
+  document.getElementById('a-form').style.display = 'none';
+  document.getElementById('a-lockout').classList.add('visible');
+  clearAlert();
+
+  let sec = 60;
+  const interval = setInterval(() => {
+    sec--;
+    document.getElementById('lock-countdown').textContent = sec;
+    if (sec <= 0) {
+      clearInterval(interval);
+      isLocked = false; attempts = 0;
+      document.getElementById('a-fill').style.width = '0%';
+      document.getElementById('a-form').style.display = 'block';
+      document.getElementById('a-lockout').classList.remove('visible');
+      document.getElementById('a-btn').disabled = false;
+      document.getElementById('a-btn').textContent = 'Access Admin Panel';
+    }
+  }, 1000);
+}
+
+// Enter key
+document.addEventListener('keydown', e => { if (e.key === 'Enter') doAdminLogin(); });
+
+// Already logged in as admin?
+if (sessionStorage.getItem('mg_role') === 'admin') window.location.href = 'admin.html';
+</script>
+</body>
+</html>

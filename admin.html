@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — My Memories</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;1,300&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #07090b; --card: rgba(255,255,255,0.03); --border: rgba(255,255,255,0.07);
+  --gold: #d4a853; --gold2: #c47b3a; --text: #ddd8d0; --muted: #5c5850;
+  --ok: #5aae7a; --err: #e05a5a; --white: #fff;
+}
+body { background: var(--bg); color: var(--text); font-family: 'Jost', sans-serif; min-height: 100vh; }
+.grain { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.3;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='4'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"); }
+main { position: relative; z-index: 1; }
+
+/* topbar */
+.topbar {
+  background: rgba(7,9,11,0.92); border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px); padding: 1.1rem 2.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.tb-brand { display: flex; align-items: center; gap: 0.75rem; }
+.tb-icon {
+  width: 34px; height: 34px; border-radius: 9px;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+}
+.tb-name { font-family: 'Cormorant Garamond', serif; font-size: 1.3rem; font-weight: 300; color: var(--white); }
+.tb-right { display: flex; align-items: center; gap: 0.75rem; }
+.ghost {
+  padding: 0.45rem 1rem; background: transparent;
+  border: 1px solid var(--border); border-radius: 7px;
+  color: var(--muted); font-family: 'Jost', sans-serif;
+  font-size: 0.7rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-block;
+}
+.ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+/* stats */
+.stats {
+  padding: 1.5rem 2.5rem;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+.stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.2rem; }
+.stat-lbl { font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+.stat-val { font-family: 'Cormorant Garamond', serif; font-size: 2.1rem; font-weight: 300; line-height: 1; }
+.vg { color: var(--gold); } .vok { color: var(--ok); } .verr { color: var(--err); }
+
+/* content */
+.content { padding: 2rem 2.5rem; }
+.sec-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.2rem; }
+.sec-title { font-family: 'Cormorant Garamond', serif; font-size: 1.45rem; font-weight: 300; color: var(--white); }
+.ftabs { display: flex; gap: 0.4rem; }
+.ftab {
+  padding: 0.32rem 0.75rem; border-radius: 20px; font-size: 0.68rem; font-weight: 500;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--muted); cursor: pointer; font-family: 'Jost', sans-serif; transition: all 0.2s;
+}
+.ftab.active, .ftab:hover { border-color: var(--gold); color: var(--gold); }
+.ftab.active { background: rgba(212,168,83,0.09); }
+
+/* request list */
+.list { display: flex; flex-direction: column; gap: 0.8rem; }
+.rcard {
+  background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+  padding: 1.1rem 1.3rem; display: flex; align-items: center; gap: 1rem;
+  transition: border-color 0.2s; animation: cardIn 0.3s ease;
+}
+@keyframes cardIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.rcard:hover { border-color: rgba(255,255,255,0.12); }
+.av {
+  width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(212,168,83,0.18), rgba(196,123,58,0.08));
+  border: 1px solid rgba(212,168,83,0.18);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cormorant Garamond', serif; font-weight: 600; color: var(--gold); font-size: 1rem;
+}
+.ri { flex: 1; min-width: 0; }
+.rname { font-size: 0.92rem; font-weight: 500; color: var(--white); margin-bottom: 0.18rem; }
+.rmob { font-size: 0.75rem; color: var(--muted); }
+.rdate { font-size: 0.64rem; color: var(--muted); margin-top: 0.1rem; }
+.badge {
+  padding: 0.22rem 0.7rem; border-radius: 20px;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; flex-shrink: 0;
+}
+.bp { background: rgba(212,168,83,0.1);  border: 1px solid rgba(212,168,83,0.22); color: var(--gold); }
+.ba { background: rgba(90,174,122,0.1);  border: 1px solid rgba(90,174,122,0.22); color: var(--ok); }
+.br { background: rgba(224,90,90,0.1);   border: 1px solid rgba(224,90,90,0.22);  color: var(--err); }
+.acts { display: flex; gap: 0.45rem; flex-shrink: 0; }
+.abtn {
+  padding: 0.38rem 0.85rem; border-radius: 7px;
+  font-family: 'Jost', sans-serif; font-size: 0.7rem; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  cursor: pointer; border: none; transition: all 0.2s;
+}
+.aa { background: rgba(90,174,122,0.13);  color: var(--ok);  border: 1px solid rgba(90,174,122,0.28); }
+.aa:hover { background: rgba(90,174,122,0.24); }
+.ar { background: rgba(224,90,90,0.1);    color: var(--err); border: 1px solid rgba(224,90,90,0.22); }
+.ar:hover { background: rgba(224,90,90,0.2); }
+.ad { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+.ad:hover { color: var(--err); border-color: rgba(224,90,90,0.3); }
+
+.empty { text-align: center; padding: 4rem 2rem; color: var(--muted); font-size: 0.83rem; }
+.empty-icon { font-size: 2.4rem; display: block; margin-bottom: 0.7rem; opacity: 0.25; }
+
+/* settings */
+.settings {
+  margin-top: 2rem; background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.5rem;
+}
+.settings h3 { font-family: 'Cormorant Garamond', serif; font-size: 1.2rem; font-weight: 300; color: var(--white); margin-bottom: 1.1rem; }
+.settings p { font-size: 0.77rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.6; }
+.srow { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.8rem; align-items: end; }
+.sfield label { display: block; font-size: 0.65rem; letter-spacing: 0.13em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.42rem; }
+.sfield input {
+  width: 100%; padding: 0.72rem 0.9rem;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 8px; color: var(--text);
+  font-family: 'Jost', sans-serif; font-size: 0.86rem;
+  outline: none; transition: border-color 0.2s;
+}
+.sfield input:focus { border-color: rgba(212,168,83,0.4); }
+.sfield input::placeholder { color: var(--muted); }
+.btn-gold {
+  padding: 0.72rem 1.2rem;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  border: none; border-radius: 8px; color: #0a0806;
+  font-family: 'Jost', sans-serif; font-size: 0.74rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer; white-space: nowrap; transition: all 0.2s;
+}
+.btn-gold:hover { box-shadow: 0 4px 14px rgba(212,168,83,0.28); }
+
+/* toast */
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem; z-index: 999;
+  background: #141618; border: 1px solid var(--border); border-radius: 10px;
+  padding: 0.8rem 1.2rem; font-size: 0.8rem; color: var(--text);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  display: flex; align-items: center; gap: 0.55rem;
+  transform: translateY(20px); opacity: 0; transition: all 0.28s ease; pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.tdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.tg { background: var(--ok); } .tr { background: var(--err); } .ty { background: var(--gold); }
+
+@media (max-width: 640px) {
+  .topbar, .stats, .content { padding-left: 1.1rem; padding-right: 1.1rem; }
+  .rcard { flex-wrap: wrap; } .acts { width: 100%; }
+  .srow { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<main>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="tb-brand">
+      <div class="tb-icon">🛡️</div>
+      <span class="tb-name">Admin Panel</span>
+    </div>
+    <div class="tb-right">
+      <a href="gallery.html" class="ghost">View Gallery</a>
+      <button class="ghost" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat"><div class="stat-lbl">Total Requests</div><div class="stat-val vg" id="s-total">0</div></div>
+    <div class="stat"><div class="stat-lbl">Pending</div><div class="stat-val vg" id="s-pending">0</div></div>
+    <div class="stat"><div class="stat-lbl">Approved</div><div class="stat-val vok" id="s-approved">0</div></div>
+    <div class="stat"><div class="stat-lbl">Rejected</div><div class="stat-val verr" id="s-rejected">0</div></div>
+  </div>
+
+  <div class="content">
+
+    <!-- Request list -->
+    <div class="sec-head">
+      <h2 class="sec-title">Access Requests</h2>
+      <div class="ftabs">
+        <button class="ftab active" onclick="setFilter('all', this)">All</button>
+        <button class="ftab" onclick="setFilter('pending', this)">Pending</button>
+        <button class="ftab" onclick="setFilter('approved', this)">Approved</button>
+        <button class="ftab" onclick="setFilter('rejected', this)">Rejected</button>
+      </div>
+    </div>
+    <div class="list" id="user-list"></div>
+
+    <!-- Change credentials -->
+    <div class="settings">
+      <h3>Change Admin Credentials</h3>
+      <p>Update your username and password here. You'll need to use the new credentials next time you login.</p>
+      <div class="srow">
+        <div class="sfield">
+          <label>New Username</label>
+          <input type="text" id="new-user" placeholder="e.g. mygallery">
+        </div>
+        <div class="sfield">
+          <label>New Password</label>
+          <input type="password" id="new-pass" placeholder="Min 4 characters">
+        </div>
+        <button class="btn-gold" onclick="updateCreds()">Save</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span class="tdot tg" id="tdot"></span>
+  <span id="tmsg"></span>
+</div>
+
+<script>
+// ── GUARD — redirect to admin-login if not authenticated ──
+if (sessionStorage.getItem('mg_role') !== 'admin') {
+  window.location.href = 'admin-login.html';
+}
+
+function doLogout() {
+  sessionStorage.removeItem('mg_role');
+  window.location.href = 'admin-login.html';   // back to admin login, not guest login
+}
+
+// ── Storage helpers ──────────────────────────────────────
+function getUsers()      { return JSON.parse(localStorage.getItem('mg_users') || '[]'); }
+function saveUsers(u)    { localStorage.setItem('mg_users', JSON.stringify(u)); }
+function getAdminCreds() { return JSON.parse(localStorage.getItem('mg_admin') || '{"user":"admin","password":"admin123"}'); }
+function saveAdminCreds(c){ localStorage.setItem('mg_admin', JSON.stringify(c)); }
+
+let allUsers = [];
+let curFilter = 'all';
+
+window.addEventListener('DOMContentLoaded', () => {
+  allUsers = getUsers();
+  renderStats();
+  renderList();
+});
+
+// ── Stats ────────────────────────────────────────────────
+function renderStats() {
+  document.getElementById('s-total').textContent    = allUsers.length;
+  document.getElementById('s-pending').textContent  = allUsers.filter(u => u.status === 'pending').length;
+  document.getElementById('s-approved').textContent = allUsers.filter(u => u.status === 'approved').length;
+  document.getElementById('s-rejected').textContent = allUsers.filter(u => u.status === 'rejected').length;
+}
+
+// ── Filter ───────────────────────────────────────────────
+function setFilter(f, btn) {
+  curFilter = f;
+  document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+// ── Render user cards ────────────────────────────────────
+function renderList() {
+  const list = document.getElementById('user-list');
+  const filtered = curFilter === 'all' ? allUsers : allUsers.filter(u => u.status === curFilter);
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty"><span class="empty-icon">📭</span>No ${curFilter === 'all' ? '' : curFilter} requests yet.</div>`;
+    return;
+  }
+
+  const sorted = [...filtered].sort((a, b) => {
+    const o = { pending: 0, approved: 1, rejected: 2 };
+    return (o[a.status] ?? 3) - (o[b.status] ?? 3) || new Date(b.requestedAt) - new Date(a.requestedAt);
+  });
+
+  list.innerHTML = sorted.map(u => {
+    const initials = u.name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) || '?';
+    const date = new Date(u.requestedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+    let acts = '';
+    if (u.status === 'pending') {
+      acts = `<button class="abtn aa" onclick="setStatus(${u.id},'approved')">✓ Approve</button>
+              <button class="abtn ar" onclick="setStatus(${u.id},'rejected')">✕ Reject</button>`;
+    } else if (u.status === 'approved') {
+      acts = `<button class="abtn ar" onclick="setStatus(${u.id},'rejected')">Revoke</button>`;
+    } else {
+      acts = `<button class="abtn aa" onclick="setStatus(${u.id},'approved')">Re-approve</button>`;
+    }
+
+    const badgeClass = u.status === 'pending' ? 'bp' : u.status === 'approved' ? 'ba' : 'br';
+
+    return `
+      <div class="rcard">
+        <div class="av">${initials}</div>
+        <div class="ri">
+          <div class="rname">${u.name}</div>
+          <div class="rmob">📱 ${u.mobile}</div>
+          <div class="rdate">Requested: ${date}</div>
+        </div>
+        <span class="badge ${badgeClass}">${u.status}</span>
+        <div class="acts">
+          ${acts}
+          <button class="abtn ad" onclick="delUser(${u.id},'${u.name.replace(/'/g,"\\'")}')">🗑</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── Actions ──────────────────────────────────────────────
+function setStatus(id, status) {
+  const u = allUsers.find(x => x.id === id);
+  if (!u) return;
+  u.status = status;
+  saveUsers(allUsers);
+  renderStats(); renderList();
+  toast(`${u.name} ${status === 'approved' ? 'approved ✓' : 'access rejected'}`, status === 'approved' ? 'g' : 'r');
+}
+
+function delUser(id, name) {
+  if (!confirm(`Remove "${name}"? This cannot be undone.`)) return;
+  allUsers = allUsers.filter(u => u.id !== id);
+  saveUsers(allUsers);
+  renderStats(); renderList();
+  toast(`${name} removed`, 'y');
+}
+
+function updateCreds() {
+  const user = document.getElementById('new-user').value.trim();
+  const pass = document.getElementById('new-pass').value;
+  if (!user || !pass)  { toast('Fill both fields', 'r'); return; }
+  if (pass.length < 4) { toast('Password too short (min 4 chars)', 'r'); return; }
+  saveAdminCreds({ user, password: pass });
+  document.getElementById('new-user').value = '';
+  document.getElementById('new-pass').value = '';
+  toast('Credentials updated! Use them next login.', 'g');
+}
+
+// ── Toast ────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, color = 'g') {
+  document.getElementById('tmsg').textContent = msg;
+  document.getElementById('tdot').className = 'tdot t' + color;
+  const el = document.getElementById('toast');
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Memories — Login</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,500;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #08090b;
+  --card-bg: rgba(255,255,255,0.028);
+  --card-border: rgba(255,255,255,0.075);
+  --gold: #d4a853;
+  --gold2: #b87d30;
+  --text: #e0dbd2;
+  --muted: #64605a;
+  --input-bg: rgba(255,255,255,0.045);
+  --input-border: rgba(255,255,255,0.1);
+  --input-focus-border: rgba(212,168,83,0.55);
+  --input-focus-shadow: rgba(212,168,83,0.18);
+  --err-bg: rgba(220,80,80,0.10);
+  --err-border: rgba(220,80,80,0.22);
+  --err-text: #f08888;
+  --warn-bg: rgba(212,168,83,0.09);
+  --warn-border: rgba(212,168,83,0.22);
+  --warn-text: #d4a853;
+  --ok-bg: rgba(80,185,120,0.09);
+  --ok-border: rgba(80,185,120,0.22);
+  --ok-text: #6ecf96;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Jost', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ── background ── */
+.bg-orb {
+  position: fixed; border-radius: 50%;
+  filter: blur(90px); pointer-events: none; z-index: 0;
+}
+.orb-a { width: 500px; height: 500px; top: -140px; right: -100px;
+  background: radial-gradient(circle, rgba(212,168,83,.07) 0%, transparent 70%); }
+.orb-b { width: 380px; height: 380px; bottom: -100px; left: -80px;
+  background: radial-gradient(circle, rgba(180,120,40,.05) 0%, transparent 70%); }
+.grain {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.45;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* ── card ── */
+.card {
+  position: relative; z-index: 10;
+  width: 100%; max-width: 440px;
+  margin: 1.5rem;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  backdrop-filter: blur(22px);
+  padding: 3rem 2.8rem 2.6rem;
+  animation: cardUp 0.55s cubic-bezier(0.22, 0.68, 0, 1.15) forwards;
+}
+@keyframes cardUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── brand ── */
+.brand { text-align: center; margin-bottom: 2.4rem; }
+.brand-icon {
+  width: 56px; height: 56px; margin: 0 auto 1.1rem;
+  background: linear-gradient(140deg, var(--gold), var(--gold2));
+  border-radius: 15px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 10px 30px rgba(212,168,83,0.22);
+}
+.brand h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.1rem; font-weight: 300;
+  color: #fff; letter-spacing: 0.02em;
+}
+.brand p {
+  margin-top: 0.3rem;
+  font-size: 0.7rem; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* ── tabs ── */
+.tabs {
+  display: flex;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px; padding: 4px;
+  margin-bottom: 1.8rem;
+}
+.tab {
+  flex: 1; padding: 0.55rem 0.5rem;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.75rem; font-weight: 500;
+  letter-spacing: 0.07em; text-transform: uppercase;
+  border: none; background: transparent;
+  color: var(--muted); border-radius: 7px;
+  cursor: pointer; transition: all 0.22s ease;
+}
+.tab.active {
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #0d0a06;
+  box-shadow: 0 4px 14px rgba(212,168,83,0.28);
+}
+
+/* ── form panels — KEY FIX: fixed height approach ── */
+.form-panel { display: none; }
+.form-panel.active { display: block; animation: panelIn 0.28s ease; }
+@keyframes panelIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── fields ── */
+.field { margin-bottom: 1.1rem; }
+.field label {
+  display: block; margin-bottom: 0.48rem;
+  font-size: 0.67rem; letter-spacing: 0.13em;
+  text-transform: uppercase; color: var(--muted);
+}
+.field input {
+  width: 100%; padding: 0.78rem 1rem;
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 9px;
+  color: var(--text);
+  font-family: 'Jost', sans-serif; font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus {
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px var(--input-focus-shadow);
+}
+.field input::placeholder { color: var(--muted); }
+
+.row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
+
+/* ── primary button ── */
+.btn-primary {
+  width: 100%; padding: 0.88rem 1rem;
+  margin-top: 0.3rem;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  border: none; border-radius: 9px;
+  color: #0d0a06;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.82rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s ease;
+  box-shadow: 0 4px 18px rgba(212,168,83,0.18);
+}
+.btn-primary:hover  { transform: translateY(-1px); box-shadow: 0 7px 22px rgba(212,168,83,0.32); }
+.btn-primary:active { transform: translateY(0); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ── alert box ── */
+.alert {
+  padding: 0.72rem 1rem; border-radius: 8px;
+  font-size: 0.79rem; margin-bottom: 1rem;
+  display: none; line-height: 1.5;
+}
+.alert.show-error   { display: block; background: var(--err-bg); border: 1px solid var(--err-border); color: var(--err-text); }
+.alert.show-warn    { display: block; background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-text); }
+.alert.show-success { display: block; background: var(--ok-bg); border: 1px solid var(--ok-border); color: var(--ok-text); }
+
+/* ── pending success state ── */
+.pending-state {
+  display: none;
+  text-align: center; padding: 1rem 0 0.5rem;
+}
+.pending-state.visible { display: block; }
+.pending-icon { font-size: 2.6rem; display: block; margin-bottom: 0.8rem; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+.pending-state h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.55rem; font-weight: 300; color: #fff; margin-bottom: 0.45rem;
+}
+.pending-state p { font-size: 0.81rem; color: var(--muted); line-height: 1.75; }
+
+/* ── admin portal link ── */
+.admin-link {
+  margin-top: 2rem; padding-top: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  text-align: center;
+}
+.admin-link a {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none;
+  padding: 0.42rem 1rem;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 20px;
+  transition: all 0.22s;
+}
+.admin-link a:hover {
+  color: var(--gold);
+  border-color: rgba(212,168,83,0.25);
+  background: rgba(212,168,83,0.04);
+}
+</style>
+</head>
+<body>
+
+<div class="bg-orb orb-a"></div>
+<div class="bg-orb orb-b"></div>
+<div class="grain"></div>
+
+<div class="card">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-icon">📷</div>
+    <h1>My Memories</h1>
+    <p>Private Photo Gallery</p>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" id="tab-login" onclick="switchTab('login')">Login</button>
+    <button class="tab" id="tab-request" onclick="switchTab('request')">Request Access</button>
+  </div>
+
+  <!-- ── LOGIN PANEL ── -->
+  <div class="form-panel active" id="panel-login">
+    <div class="alert" id="login-alert"></div>
+    <div class="field">
+      <label>Mobile Number</label>
+      <input type="tel" id="login-mobile" placeholder="9876543210" maxlength="15" autocomplete="tel">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="login-pass" placeholder="Enter your password" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="login-btn" onclick="doLogin()">Enter Gallery</button>
+  </div>
+
+  <!-- ── REQUEST ACCESS PANEL ── -->
+  <div class="form-panel" id="panel-request">
+    <div class="alert" id="req-alert"></div>
+
+    <!-- form fields shown before submission -->
+    <div id="req-form-body">
+      <div class="row-2">
+        <div class="field">
+          <label>First Name</label>
+          <input type="text" id="req-first" placeholder="Arjun" autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label>Last Name</label>
+          <input type="text" id="req-last" placeholder="Kumar" autocomplete="family-name">
+        </div>
+      </div>
+      <div class="field">
+        <label>Mobile Number</label>
+        <input type="tel" id="req-mobile" placeholder="9876543210" maxlength="15" autocomplete="tel">
+      </div>
+      <div class="field">
+        <label>Set a Password</label>
+        <input type="password" id="req-pass" placeholder="Minimum 4 characters" autocomplete="new-password">
+      </div>
+      <button class="btn-primary" id="req-btn" onclick="doRequest()">Send Access Request</button>
+    </div>
+
+    <!-- shown after successful submission -->
+    <div class="pending-state" id="req-success">
+      <span class="pending-icon">⏳</span>
+      <h3>Request Sent!</h3>
+      <p>Your access request is pending admin approval.<br>Come back and login once you're approved.</p>
+    </div>
+  </div>
+
+  <!-- Admin portal link — goes to admin-login.html, NOT admin.html -->
+  <div class="admin-link">
+    <a href="admin-login.html">🛡️ Admin</a>
+  </div>
+
+</div><!-- /card -->
+
+<script>
+// ─── Storage helpers ───────────────────────────────────────
+function getUsers()  { return JSON.parse(localStorage.getItem('mg_users')  || '[]'); }
+function saveUsers(u){ localStorage.setItem('mg_users', JSON.stringify(u)); }
+
+// ─── Tab switching ─────────────────────────────────────────
+function switchTab(name) {
+  // update tab buttons
+  document.getElementById('tab-login').classList.toggle('active', name === 'login');
+  document.getElementById('tab-request').classList.toggle('active', name === 'request');
+  // show/hide panels
+  document.getElementById('panel-login').classList.toggle('active', name === 'login');
+  document.getElementById('panel-request').classList.toggle('active', name === 'request');
+  // clear alerts
+  clearAlert('login-alert');
+  clearAlert('req-alert');
+}
+
+// ─── Alert helpers ─────────────────────────────────────────
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'alert show-' + type;
+}
+function clearAlert(id) {
+  const el = document.getElementById(id);
+  el.textContent = '';
+  el.className = 'alert';
+}
+
+// ─── LOGIN ─────────────────────────────────────────────────
+function doLogin() {
+  const mobile = document.getElementById('login-mobile').value.trim();
+  const pass   = document.getElementById('login-pass').value;
+
+  clearAlert('login-alert');
+  if (!mobile || !pass) { showAlert('login-alert', 'Please fill in both fields.', 'error'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.textContent = 'Checking…';
+
+  setTimeout(() => {
+    const users = getUsers();
+    const user  = users.find(u => u.mobile === mobile && u.password === pass);
+
+    if (!user) {
+      showAlert('login-alert', 'Wrong mobile number or password.', 'error');
+    } else if (user.status === 'pending') {
+      showAlert('login-alert', 'Your request is pending admin approval. Please wait.', 'warn');
+    } else if (user.status === 'rejected') {
+      showAlert('login-alert', 'Your access request was rejected by the admin.', 'error');
+    } else {
+      // approved ✓
+      sessionStorage.setItem('mg_role', 'guest');
+      sessionStorage.setItem('mg_user', JSON.stringify({ name: user.name, mobile: user.mobile }));
+      btn.textContent = '✓ Welcome!';
+      setTimeout(() => { window.location.href = 'gallery.html'; }, 400);
+      return;
+    }
+    btn.disabled = false; btn.textContent = 'Enter Gallery';
+  }, 500);
+}
+
+// ─── REQUEST ACCESS ────────────────────────────────────────
+function doRequest() {
+  const first  = document.getElementById('req-first').value.trim();
+  const last   = document.getElementById('req-last').value.trim();
+  const mobile = document.getElementById('req-mobile').value.trim();
+  const pass   = document.getElementById('req-pass').value;
+
+  clearAlert('req-alert');
+  if (!first || !mobile || !pass) { showAlert('req-alert', 'Please fill in all required fields.', 'error'); return; }
+  if (mobile.length < 7)          { showAlert('req-alert', 'Please enter a valid mobile number.', 'error'); return; }
+  if (pass.length < 4)            { showAlert('req-alert', 'Password must be at least 4 characters.', 'error'); return; }
+
+  const users = getUsers();
+  if (users.find(u => u.mobile === mobile)) {
+    showAlert('req-alert', 'This mobile number already has a pending request.', 'error'); return;
+  }
+
+  const btn = document.getElementById('req-btn');
+  btn.disabled = true; btn.textContent = 'Sending…';
+
+  setTimeout(() => {
+    users.push({
+      id: Date.now(),
+      name: (first + ' ' + last).trim(),
+      mobile, password: pass,
+      status: 'pending',
+      requestedAt: new Date().toISOString()
+    });
+    saveUsers(users);
+    // hide form, show success
+    document.getElementById('req-form-body').style.display = 'none';
+    document.getElementById('req-success').classList.add('visible');
+    btn.disabled = false;
+  }, 500);
+}
+
+// ─── Enter key support ─────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('panel-login').classList.contains('active')) doLogin();
+  else doRequest();
+});
+
+// ─── Auto-redirect if already logged in ───────────────────
+if (sessionStorage.getItem('mg_role') === 'guest')  window.location.href = 'gallery.html';
+if (sessionStorage.getItem('mg_role') === 'admin')  window.location.href = 'admin.html';
+</script>
+</body>
+</html>
